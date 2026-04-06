@@ -1,0 +1,12 @@
+version: v1alpha1
+metadata:
+  name: jetson-nvgpu
+  version: "{{ .VERSION }}"
+  author: Michał Małyska
+  description: |
+    [{{ .TIER }}] This system extension provides the OE4T/linux-nvgpu kernel module
+    built against a specific Talos version, for NVIDIA Jetson Orin NX (and compatible)
+    devices using the Tegra GPU (nvgpu driver).
+  compatibility:
+    talos:
+      version: ">= v1.12.0"

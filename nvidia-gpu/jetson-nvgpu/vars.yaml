@@ -1,0 +1,3 @@
+# nvgpu commit hash — update when bumping jetson_nvgpu_ref in siderolabs-pkgs
+VERSION: "d530a48-{{ .BUILD_ARG_TAG }}"
+TIER: "extra"

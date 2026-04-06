@@ -112,6 +112,7 @@ TARGETS += nvidia-fabricmanager-production
 TARGETS += nvidia-gdrdrv-device
 TARGETS += nvidia-open-gpu-kernel-modules-lts
 TARGETS += nvidia-open-gpu-kernel-modules-production
+TARGETS += jetson-nvgpu
 TARGETS += nvme-cli
 TARGETS += px-fuse
 TARGETS += soci-snapshotter
