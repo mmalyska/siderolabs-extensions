@@ -1,19 +1,19 @@
-name: jetson-nvgpu
+name: nvgpu
 variant: scratch
 shell: /bin/bash
 dependencies:
   - stage: base
   # The pkgs version for a particular release of Talos as defined in
   # https://github.com/siderolabs/talos/blob/<talos version>/pkg/machinery/gendata/data/pkgs
-  # For this fork, build with: make jetson-nvgpu PKGS=<pkgs-tag> PKGS_PREFIX=ghcr.io/mmalyska
-  - image: "{{ .BUILD_ARG_PKGS_PREFIX }}/jetson-nvgpu-pkg:{{ .BUILD_ARG_PKGS }}"
+  # For this fork, build with: make nvgpu PKGS=<pkgs-tag> PKGS_PREFIX=ghcr.io/mmalyska
+  - image: "{{ .BUILD_ARG_PKGS_PREFIX }}/nvgpu-driver-pkg:{{ .BUILD_ARG_PKGS }}"
 steps:
   - install:
       - |
         mkdir -p /rootfs/usr/lib/modules \
           /rootfs/usr/local/lib/modprobe.d
 
-        cp /pkg/files/jetson-nvgpu.conf /rootfs/usr/local/lib/modprobe.d/jetson-nvgpu.conf
+        cp /pkg/files/nvgpu.conf /rootfs/usr/local/lib/modprobe.d/nvgpu.conf
 
         cp -R /usr/lib/modules/* /rootfs/usr/lib/modules
     test:

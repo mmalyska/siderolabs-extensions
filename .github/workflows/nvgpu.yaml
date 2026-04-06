@@ -1,8 +1,8 @@
 ---
-# Custom CI for jetson-nvgpu extension — uses GitHub-hosted arm64 runners.
-# Pulls jetson-nvgpu-pkg from ghcr.io/mmalyska (built by siderolabs-pkgs fork).
+# Custom CI for nvgpu extension — uses GitHub-hosted arm64 runners.
+# Pulls nvgpu-driver-pkg from ghcr.io/mmalyska (built by siderolabs-pkgs fork).
 concurrency:
-  group: ${{ github.head_ref || github.run_id }}-jetson-nvgpu
+  group: ${{ github.head_ref || github.run_id }}-nvgpu
   cancel-in-progress: true
 
 "on":
@@ -23,7 +23,7 @@ concurrency:
         required: false
         default: "v1.12.0-50-ga92bed5"
 
-name: jetson-nvgpu
+name: nvgpu
 
 jobs:
   build:
@@ -51,7 +51,7 @@ jobs:
       - name: Build (PR — no push)
         if: github.event_name == 'pull_request'
         run: |
-          make jetson-nvgpu \
+          make nvgpu \
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
@@ -61,7 +61,7 @@ jobs:
       - name: Build and push
         if: github.event_name != 'pull_request'
         run: |
-          make jetson-nvgpu \
+          make nvgpu \
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \

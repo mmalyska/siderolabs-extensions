@@ -52,7 +52,7 @@ spec:
     - nvidia-gdrdrv-device
     - nvidia-open-gpu-kernel-modules-lts
     - nvidia-open-gpu-kernel-modules-production
-    - jetson-nvgpu
+    - nvgpu
     - nvme-cli
     - px-fuse
     - soci-snapshotter
