@@ -92,7 +92,7 @@ jobs:
           git clone --depth 1 --branch ${TALOS_VERSION} https://github.com/siderolabs/talos
           cd talos
 
-          make installer-base imager PLATFORM=linux/amd64 \
+          make installer-base imager PLATFORM=linux/arm64 \
           INSTALLER_ARCH=arm64 \
           REGISTRY=ghcr.io \
           USERNAME=${{ github.repository_owner }} \
