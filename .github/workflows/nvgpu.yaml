@@ -86,6 +86,9 @@ jobs:
         env:
           TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
         run: |
+          DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
+          echo "nvgpu digest: ${DIGEST}"
+          
           git clone --depth 1 --branch ${TALOS_VERSION} https://github.com/siderolabs/talos
           cd talos
 
@@ -96,9 +99,6 @@ jobs:
           IMAGE_TAG_OUT=${TALOS_VERSION} \
           PKG_KERNEL=ghcr.io/mmalyska/kernel:v1.12.1@sha256:79aa6527ff31e848247c952c1510a7c02973c6a48560ede6ff2897abc8c217bf \
           PUSH=true
-
-          DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
-          echo "nvgpu digest: ${DIGEST}"
 
           make image-installer \
           REGISTRY=ghcr.io \
