@@ -240,7 +240,7 @@ nonfree: $(NONFREE_TARGETS)  ## Builds all nonfree targets defined.
 
 .PHONY: $(TARGETS) $(NONFREE_TARGETS)
 $(TARGETS) $(NONFREE_TARGETS): $(ARTIFACTS)/bldr
-	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(shell $(ARTIFACTS)/bldr eval --target $@ --build-arg TAG=$(TAG) PKGS=$(PKGS) '{{.VERSION}}' 2>/dev/null) --push=$(PUSH) --metadata-file=$(ARTIFACTS)/$@.metadata.json"
+	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(shell $(ARTIFACTS)/bldr eval --target $@ --build-arg TAG=$(TAG) --build-arg PKGS=$(PKGS) '{{.VERSION}}' 2>/dev/null) --push=$(PUSH) --metadata-file=$(ARTIFACTS)/$@.metadata.json"
 
 .PHONY: deps.svg
 deps.svg:  ## Generates a dependency graph of the Pkgfile.
