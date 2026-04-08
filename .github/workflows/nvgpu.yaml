@@ -86,14 +86,14 @@ jobs:
         env:
           TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
         run: |
-          git clone https://github.com/siderolabs/talos
+          git clone --depth 1 --branch ${TALOS_VERSION} https://github.com/siderolabs/talos
           cd talos
 
           make installer-base imager PLATFORM=linux/amd64 \
           INSTALLER_ARCH=arm64 \
           REGISTRY=ghcr.io \
           USERNAME=${{ github.repository_owner }} \
-          IMAGE_TAG_OUT=v1.12.1 \
+          IMAGE_TAG_OUT=${TALOS_VERSION} \
           PKG_KERNEL=ghcr.io/mmalyska/kernel:v1.12.1@sha256:79aa6527ff31e848247c952c1510a7c02973c6a48560ede6ff2897abc8c217bf \
           PUSH=true
 
@@ -103,7 +103,7 @@ jobs:
           make image-installer \
           REGISTRY=ghcr.io \
           USERNAME=${{ github.repository_owner }} \
-          IMAGER_ARGS="--base-installer-image=ghcr.io/${{ github.repository_owner }}/installer-base:v1.12.1 \
+          IMAGER_ARGS="--base-installer-image=ghcr.io/${{ github.repository_owner }}/installer-base:${TALOS_VERSION} \
             --system-extension-image=ghcr.io/${{ github.repository_owner }}/nvgpu@${DIGEST}"
 
           crane push _out/installer-arm64.tar ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}
