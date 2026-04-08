@@ -90,6 +90,7 @@ jobs:
           # so kernel-build was cached → same signing key M as the nvgpu modules).
           docker pull ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG}
           id=$(docker create ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG})
+          echo "Created container ${id} to extract vmlinuz"
           docker cp ${id}:/boot/vmlinuz _out/vmlinuz-arm64
           docker rm ${id}
           echo "Extracted vmlinuz from talos-kernel:${PKGS_TAG}"
