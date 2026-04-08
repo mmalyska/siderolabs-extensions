@@ -59,7 +59,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache"
 
@@ -70,7 +70,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache,mode=max"
@@ -84,7 +84,7 @@ jobs:
       - name: Extract fork kernel vmlinuz
         if: github.event_name != 'pull_request'
         env:
-          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5' }}
+          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }}
         run: |
           # Pull the fork's kernel OCI (built in the same pkgs CI job as nvgpu-driver-pkg,
           # so kernel-build was cached → same signing key M as the nvgpu modules).
