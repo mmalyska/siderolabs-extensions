@@ -89,7 +89,8 @@ jobs:
           # Pull the fork's kernel OCI (built in the same pkgs CI job as nvgpu-driver-pkg,
           # so kernel-build was cached → same signing key M as the nvgpu modules).
           docker pull ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG}
-          id=$(docker create ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG})
+          echo "Pulled talos-kernel:${PKGS_TAG} to extract vmlinuz"
+          id=$(docker create ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG} --entrypoint /bin/bash)
           echo "Created container ${id} to extract vmlinuz"
           docker cp ${id}:/boot/vmlinuz _out/vmlinuz-arm64
           docker rm ${id}
