@@ -22,6 +22,10 @@ concurrency:
         description: "PKGS tag to build against (e.g. v1.12.0-50-ga92bed5)"
         required: false
         default: "v1.12.0-50-ga92bed5"
+      talos_version:
+        description: "Talos version to bake the installer for (e.g. v1.12.6)"
+        required: false
+        default: "v1.12.6"
 
 name: nvgpu
 
@@ -70,3 +74,42 @@ jobs:
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache,mode=max"
+
+      - name: Install crane
+        if: github.event_name != 'pull_request'
+        run: |
+          curl -sSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_arm64.tar.gz \
+            | tar xz -C /usr/local/bin crane
+
+      - name: Build and push installer
+        if: github.event_name != 'pull_request'
+        env:
+          TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
+        run: |
+          # Extract the digest of the just-built nvgpu extension image
+          DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
+          echo "nvgpu digest: ${DIGEST}"
+
+          # Use the Talos imager to build a custom installer with nvgpu baked in.
+          # Output is an OCI archive at /out/installer-arm64.tar
+          mkdir -p _out/installer
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v ${HOME}/.docker/config.json:/root/.docker/config.json:ro \
+            -v $(pwd)/_out/installer:/out \
+            ghcr.io/siderolabs/imager:${TALOS_VERSION} \
+              installer \
+              --arch arm64 \
+              --system-extension-image ghcr.io/${{ github.repository_owner }}/nvgpu@${DIGEST} \
+              --extra-kernel-arg console=tty0 \
+              --extra-kernel-arg console=ttyS0,115200 \
+              --extra-kernel-arg talos.auditd.disabled=1
+
+          # Push the installer OCI archive to GHCR
+          crane push \
+            _out/installer/installer-arm64.tar \
+            ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}
+
+          # Print the pushed digest for talconfig.yaml reference
+          echo "Installer pushed. Digest:"
+          crane digest ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}
