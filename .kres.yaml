@@ -45,6 +45,7 @@ spec:
     - nfsd
     - nfsrahead
     - nut-client
+    - nvgpu
     - nvidia-container-toolkit-lts
     - nvidia-container-toolkit-production
     - nvidia-fabricmanager-lts
@@ -52,7 +53,6 @@ spec:
     - nvidia-gdrdrv-device
     - nvidia-open-gpu-kernel-modules-lts
     - nvidia-open-gpu-kernel-modules-production
-    - nvgpu
     - nvme-cli
     - px-fuse
     - soci-snapshotter

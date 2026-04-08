@@ -59,8 +59,8 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
-            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
+            # PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
+            # PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache"
 
       - name: Build and push
@@ -70,8 +70,8 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
-            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
+            # PKGS=${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }} \
+            # PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache,mode=max"
 
@@ -81,67 +81,29 @@ jobs:
           curl -sSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_arm64.tar.gz \
             | tar xz -C /usr/local/bin crane
 
-      - name: Extract fork kernel vmlinuz
-        if: github.event_name != 'pull_request'
-        env:
-          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5-2-gf8ae6d4' }}
-        run: |
-          # Pull the fork's kernel OCI (built in the same pkgs CI job as nvgpu-driver-pkg,
-          # so kernel-build was cached → same signing key M as the nvgpu modules).
-          docker pull ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG}
-          echo "Pulled talos-kernel:${PKGS_TAG} to extract vmlinuz"
-          id=$(docker create ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG} --entrypoint /bin/bash)
-          echo "Created container ${id} to extract vmlinuz"
-          docker cp ${id}:/boot/vmlinuz _out/vmlinuz-arm64
-          docker rm ${id}
-          echo "Extracted vmlinuz from talos-kernel:${PKGS_TAG}"
-
-      - name: Build custom imager
-        if: github.event_name != 'pull_request'
-        env:
-          TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
-        run: |
-          # Replace the official kernel in the imager with the fork's kernel.
-          # This ensures the installer boots with signing key M, matching the nvgpu modules.
-          cat > _out/Dockerfile.custom-imager <<EOF
-          FROM ghcr.io/siderolabs/imager:${TALOS_VERSION}
-          COPY vmlinuz-arm64 /usr/install/arm64/vmlinuz
-          EOF
-          docker build \
-            --platform linux/arm64 \
-            -f _out/Dockerfile.custom-imager \
-            -t custom-imager:local \
-            _out/
-
       - name: Build and push installer
         if: github.event_name != 'pull_request'
         env:
           TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
         run: |
-          # Extract the digest of the just-built nvgpu extension image
+          git clone https://github.com/siderolabs/talos
+          cd talos
+
+          make installer-base imager PLATFORM=linux/arm64 \
+          INSTALLER_ARCH=arm64 \
+          REGISTRY=ghcr.io \
+          USERNAME=${{ github.repository_owner }} \
+          IMAGE_TAG_OUT=v1.12.1 \
+          PKG_KERNEL=ghcr.io/mmalyska/kernel:v1.12.1@sha256:79aa6527ff31e848247c952c1510a7c02973c6a48560ede6ff2897abc8c217bf \
+          PUSH=true
+
           DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
           echo "nvgpu digest: ${DIGEST}"
 
-          # Use the custom imager (fork kernel + official initramfs) to build the installer.
-          # Output is an OCI archive at /out/installer-arm64.tar
-          mkdir -p _out/installer
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            -v ${HOME}/.docker/config.json:/root/.docker/config.json:ro \
-            -v $(pwd)/_out/installer:/out \
-            custom-imager:local \
-              installer \
-              --arch arm64 \
-              --system-extension-image ghcr.io/${{ github.repository_owner }}/nvgpu@${DIGEST} \
-              --extra-kernel-arg console=tty0 \
-              --extra-kernel-arg console=ttyS0,115200 \
-              --extra-kernel-arg talos.auditd.disabled=1
+          make image-installer \
+          REGISTRY=ghcr.io \
+          USERNAME=${{ github.repository_owner }} \
+          IMAGER_ARGS="--base-installer-image=ghcr.io/${{ github.repository_owner }}/installer-base:v1.12.1 \
+            --system-extension-image=ghcr.io/${{ github.repository_owner }}/nvgpu@${DIGEST}"
 
-          # Push the installer OCI archive to GHCR
-          crane push \
-            _out/installer/installer-arm64.tar \
-            ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}
-
-          # Print the pushed digest for talconfig.yaml reference
-          echo "Installer pushed. Digest:"
-          crane digest ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}
+          crane push _out/installer-arm64.tar ghcr.io/${{ github.repository_owner }}/talos-nv1-installer:${TALOS_VERSION}

@@ -105,6 +105,7 @@ TARGETS += nfs-utils
 TARGETS += nfsd
 TARGETS += nfsrahead
 TARGETS += nut-client
+TARGETS += nvgpu
 TARGETS += nvidia-container-toolkit-lts
 TARGETS += nvidia-container-toolkit-production
 TARGETS += nvidia-fabricmanager-lts
@@ -112,7 +113,6 @@ TARGETS += nvidia-fabricmanager-production
 TARGETS += nvidia-gdrdrv-device
 TARGETS += nvidia-open-gpu-kernel-modules-lts
 TARGETS += nvidia-open-gpu-kernel-modules-production
-TARGETS += nvgpu
 TARGETS += nvme-cli
 TARGETS += px-fuse
 TARGETS += soci-snapshotter
@@ -240,7 +240,7 @@ nonfree: $(NONFREE_TARGETS)  ## Builds all nonfree targets defined.
 
 .PHONY: $(TARGETS) $(NONFREE_TARGETS)
 $(TARGETS) $(NONFREE_TARGETS): $(ARTIFACTS)/bldr
-	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(shell $(ARTIFACTS)/bldr eval --target $@ --build-arg TAG=$(TAG) --build-arg PKGS=$(PKGS) '{{.VERSION}}' 2>/dev/null) --push=$(PUSH) --metadata-file=$(ARTIFACTS)/$@.metadata.json"
+	@$(MAKE) docker-$@ TARGET_ARGS="--tag=$(REGISTRY)/$(USERNAME)/$@:$(shell $(ARTIFACTS)/bldr eval --target $@ --build-arg TAG=$(TAG) '{{.VERSION}}' 2>/dev/null) --push=$(PUSH) --metadata-file=$(ARTIFACTS)/$@.metadata.json"
 
 .PHONY: deps.svg
 deps.svg:  ## Generates a dependency graph of the Pkgfile.
