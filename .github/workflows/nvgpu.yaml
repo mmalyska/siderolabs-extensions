@@ -81,6 +81,36 @@ jobs:
           curl -sSL https://github.com/google/go-containerregistry/releases/latest/download/go-containerregistry_Linux_arm64.tar.gz \
             | tar xz -C /usr/local/bin crane
 
+      - name: Extract fork kernel vmlinuz
+        if: github.event_name != 'pull_request'
+        env:
+          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.0-50-ga92bed5' }}
+        run: |
+          # Pull the fork's kernel OCI (built in the same pkgs CI job as nvgpu-driver-pkg,
+          # so kernel-build was cached → same signing key M as the nvgpu modules).
+          docker pull ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG}
+          id=$(docker create ghcr.io/${{ github.repository_owner }}/talos-kernel:${PKGS_TAG})
+          docker cp ${id}:/boot/vmlinuz _out/vmlinuz-arm64
+          docker rm ${id}
+          echo "Extracted vmlinuz from talos-kernel:${PKGS_TAG}"
+
+      - name: Build custom imager
+        if: github.event_name != 'pull_request'
+        env:
+          TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
+        run: |
+          # Replace the official kernel in the imager with the fork's kernel.
+          # This ensures the installer boots with signing key M, matching the nvgpu modules.
+          cat > _out/Dockerfile.custom-imager <<EOF
+          FROM ghcr.io/siderolabs/imager:${TALOS_VERSION}
+          COPY vmlinuz-arm64 /usr/install/arm64/vmlinuz
+          EOF
+          docker build \
+            --platform linux/arm64 \
+            -f _out/Dockerfile.custom-imager \
+            -t custom-imager:local \
+            _out/
+
       - name: Build and push installer
         if: github.event_name != 'pull_request'
         env:
@@ -90,14 +120,14 @@ jobs:
           DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
           echo "nvgpu digest: ${DIGEST}"
 
-          # Use the Talos imager to build a custom installer with nvgpu baked in.
+          # Use the custom imager (fork kernel + official initramfs) to build the installer.
           # Output is an OCI archive at /out/installer-arm64.tar
           mkdir -p _out/installer
           docker run --rm \
             -v /var/run/docker.sock:/var/run/docker.sock \
             -v ${HOME}/.docker/config.json:/root/.docker/config.json:ro \
             -v $(pwd)/_out/installer:/out \
-            ghcr.io/siderolabs/imager:${TALOS_VERSION} \
+            custom-imager:local \
               installer \
               --arch arm64 \
               --system-extension-image ghcr.io/${{ github.repository_owner }}/nvgpu@${DIGEST} \
