@@ -59,7 +59,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.1' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.2' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache"
 
@@ -70,7 +70,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.1' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.2' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache,mode=max"
@@ -97,7 +97,7 @@ jobs:
           REGISTRY=ghcr.io \
           USERNAME=${{ github.repository_owner }} \
           IMAGE_TAG_OUT=${TALOS_VERSION} \
-          PKG_KERNEL=ghcr.io/mmalyska/kernel:v1.12.1@sha256:79aa6527ff31e848247c952c1510a7c02973c6a48560ede6ff2897abc8c217bf \
+          PKG_KERNEL=ghcr.io/${{ github.repository_owner }}/kernel:${{ inputs.pkgs_tag || 'v1.12.2' }} \
           PUSH=true
 
           make image-installer \

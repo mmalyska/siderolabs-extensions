@@ -7,7 +7,7 @@ dependencies:
   # https://github.com/siderolabs/talos/blob/<talos version>/pkg/machinery/gendata/data/pkgs
   # For this fork, build with: make nvgpu PKGS=<pkgs-tag> PKGS_PREFIX=ghcr.io/mmalyska
   - image: "{{ .BUILD_ARG_PKGS_PREFIX }}/nvgpu-driver-pkg:{{ .BUILD_ARG_PKGS }}"
-  #- image: "ghcr.io/mmalyska/nvgpu-driver-pkg:v1.12.1@sha256:a47918c3e78cbe4b7811a4a03b564e7f32c89b89a224930d3a4d10e6eb607d57"
+  - image: "{{ .BUILD_ARG_PKGS_PREFIX }}/nvmap-driver-pkg:{{ .BUILD_ARG_PKGS }}"
 steps:
   - install:
       - |
