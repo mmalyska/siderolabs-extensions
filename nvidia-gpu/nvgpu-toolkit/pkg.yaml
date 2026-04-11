@@ -9,22 +9,13 @@ dependencies:
 steps:
   - install:
       - |
-        # Install toolkit binaries — real binaries go to .real suffix, wrapper calls with config env
+        # Install toolkit binaries directly — no wrapper needed.
+        # NVIDIA_CTK_CONFIG_FILE_PATH is set via Talos machine.env so containerd and all
+        # child processes (including nvidia-container-runtime) inherit the config path.
         mkdir -p /rootfs/usr/local/bin
-        for bin in /usr/local/bin/nvidia-container-*; do
-          cp "${bin}" "/rootfs/usr/local/bin/$(basename ${bin}).real"
+        for bin in /usr/local/bin/nvidia-container-* /usr/local/bin/nvidia-ctk; do
+          [ -f "${bin}" ] && cp "${bin}" "/rootfs/usr/local/bin/$(basename ${bin})"
         done
-        cp /usr/local/bin/nvidia-ctk /rootfs/usr/local/bin/nvidia-ctk.real 2>/dev/null || true
-      - |
-        # Create wrapper for nvidia-container-runtime that sets XDG_CONFIG_HOME so the runtime
-        # reads config from /usr/local/etc/nvidia-container-runtime/config.toml (allowed in extensions)
-        # instead of the default /etc/nvidia-container-runtime/ (not allowed in extensions).
-        cat > /rootfs/usr/local/bin/nvidia-container-runtime << 'WRAPPER'
-        #!/bin/sh
-        export XDG_CONFIG_HOME=/usr/local/etc
-        exec /usr/local/bin/nvidia-container-runtime.real "$@"
-        WRAPPER
-        chmod 0755 /rootfs/usr/local/bin/nvidia-container-runtime
       - |
         # Install nvidia-container-runtime config pointing to the /usr/local/etc/ CSV path
         mkdir -p /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d
