@@ -1,0 +1,18 @@
+# Tegra GPU device nodes — confirmed present on nv1 (OE4T nvgpu + nvmap extensions)
+# Source: Phase 0 findings (OQ-4 resolved: /dev/nvhost-* are the CUDA interface on Orin)
+# Note: /dev/nvhost-ctrl (base, non-GPU) is NOT present on OE4T nvgpu driver
+# Note: /dev/nvgpu/igpu0/ is a directory, only 'power' exists at boot (not needed for CUDA)
+/dev/nvhost-ctrl-gpu, dev, 0666
+/dev/nvhost-gpu, dev, 0666
+/dev/nvhost-as-gpu, dev, 0666
+/dev/nvhost-ctxsw-gpu, dev, 0666
+/dev/nvhost-dbg-gpu, dev, 0666
+/dev/nvhost-nvsched-gpu, dev, 0666
+/dev/nvhost-nvsched_ctrl_fifo-gpu, dev, 0666
+/dev/nvhost-power-gpu, dev, 0666
+/dev/nvhost-prof-ctx-gpu, dev, 0666
+/dev/nvhost-prof-dev-gpu, dev, 0666
+/dev/nvhost-prof-gpu, dev, 0666
+/dev/nvhost-sched-gpu, dev, 0666
+/dev/nvhost-tsg-gpu, dev, 0666
+/dev/nvmap, dev, 0666

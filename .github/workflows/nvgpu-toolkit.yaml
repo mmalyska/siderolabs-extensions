@@ -1,0 +1,74 @@
+---
+# Custom CI for nvgpu-toolkit extension — uses GitHub-hosted arm64 runners.
+# Pulls nvidia-container-toolkit-tegra-pkg from ghcr.io/mmalyska
+# (built by mmalyska/siderolabs-pkgs feat/jetson-nvgpu branch).
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}-nvgpu-toolkit
+  cancel-in-progress: true
+
+"on":
+  push:
+    branches:
+      - main
+      - feat/jetson-nvgpu
+    tags:
+      - v*
+  pull_request:
+    branches:
+      - main
+      - feat/jetson-nvgpu
+  workflow_dispatch:
+    inputs:
+      pkgs_tag:
+        description: "PKGS tag to build against (nvidia-container-toolkit-tegra-pkg version)"
+        required: false
+        default: "v1.12.3"
+
+name: nvgpu-toolkit
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      packages: write
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build (PR — no push)
+        if: github.event_name == 'pull_request'
+        run: |
+          make nvgpu-toolkit \
+            PLATFORM=linux/arm64 \
+            REGISTRY=ghcr.io \
+            USERNAME=${{ github.repository_owner }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.3' }} \
+            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
+            CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache"
+
+      - name: Build and push
+        if: github.event_name != 'pull_request'
+        run: |
+          make nvgpu-toolkit \
+            PLATFORM=linux/arm64 \
+            REGISTRY=ghcr.io \
+            USERNAME=${{ github.repository_owner }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.3' }} \
+            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
+            PUSH=true \
+            CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache \
+                     --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache,mode=max"

@@ -106,6 +106,7 @@ TARGETS += nfsd
 TARGETS += nfsrahead
 TARGETS += nut-client
 TARGETS += nvgpu
+TARGETS += nvgpu-toolkit
 TARGETS += nvidia-container-toolkit-lts
 TARGETS += nvidia-container-toolkit-production
 TARGETS += nvidia-fabricmanager-lts

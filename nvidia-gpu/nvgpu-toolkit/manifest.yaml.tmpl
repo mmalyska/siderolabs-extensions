@@ -1,0 +1,13 @@
+version: v1alpha1
+metadata:
+  name: nvgpu-toolkit
+  version: "{{ .VERSION }}"
+  author: Michał Małyska
+  description: |
+    [extra] NVIDIA container runtime extension for Jetson Orin NX (Tegra/CSV mode).
+    Installs nvidia-container-runtime and related binaries to enable GPU device node
+    injection into containers via CSV mode. Requires nvgpu extension (nvgpu.ko + nvmap.ko).
+    Use with runtimeClassName: nvidia and L4T-based container images (dustynv/*).
+  compatibility:
+    talos:
+      version: ">= v1.12.0"
