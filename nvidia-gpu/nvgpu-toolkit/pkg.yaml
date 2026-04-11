@@ -9,14 +9,27 @@ dependencies:
 steps:
   - install:
       - |
-        # Install nvidia-container-toolkit binaries
+        # Install toolkit binaries — real binaries go to .real suffix, wrapper calls with config env
         mkdir -p /rootfs/usr/local/bin
-        cp -r /usr/local/bin/nvidia-container-* /rootfs/usr/local/bin/
-        cp -r /usr/local/bin/nvidia-ctk /rootfs/usr/local/bin/ 2>/dev/null || true
+        for bin in /usr/local/bin/nvidia-container-*; do
+          cp "${bin}" "/rootfs/usr/local/bin/$(basename ${bin}).real"
+        done
+        cp /usr/local/bin/nvidia-ctk /rootfs/usr/local/bin/nvidia-ctk.real 2>/dev/null || true
       - |
-        # Install l4t.csv — device node list for Tegra (from Phase 0 findings)
-        mkdir -p /rootfs/etc/nvidia-container-runtime/host-files-for-container.d
-        cp /pkg/files/l4t.csv /rootfs/etc/nvidia-container-runtime/host-files-for-container.d/l4t.csv
+        # Create wrapper for nvidia-container-runtime that sets XDG_CONFIG_HOME so the runtime
+        # reads config from /usr/local/etc/nvidia-container-runtime/config.toml (allowed in extensions)
+        # instead of the default /etc/nvidia-container-runtime/ (not allowed in extensions).
+        cat > /rootfs/usr/local/bin/nvidia-container-runtime << 'WRAPPER'
+        #!/bin/sh
+        export XDG_CONFIG_HOME=/usr/local/etc
+        exec /usr/local/bin/nvidia-container-runtime.real "$@"
+        WRAPPER
+        chmod 0755 /rootfs/usr/local/bin/nvidia-container-runtime
+      - |
+        # Install nvidia-container-runtime config pointing to the /usr/local/etc/ CSV path
+        mkdir -p /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d
+        cp /pkg/files/l4t.csv /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d/l4t.csv
+        cp /pkg/files/config.toml /rootfs/usr/local/etc/nvidia-container-runtime/config.toml
       - |
         # Install containerd runtime handler config for nvidia handler
         mkdir -p /rootfs/etc/cri/conf.d

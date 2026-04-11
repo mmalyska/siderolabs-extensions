@@ -1,0 +1,6 @@
+[nvidia-container-runtime]
+  log-level = "info"
+  mode = "csv"
+
+[nvidia-container-runtime.modes.csv]
+  mount-spec-path = "/usr/local/etc/nvidia-container-runtime/host-files-for-container.d"
