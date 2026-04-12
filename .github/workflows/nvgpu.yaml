@@ -21,7 +21,7 @@ concurrency:
       pkgs_tag:
         description: "PKGS tag to build against (e.g. v1.12.0-50-ga92bed5)"
         required: false
-        default: "v1.12.4"
+        default: "v1.12.6"
       talos_version:
         description: "Talos version to bake the installer for (e.g. v1.12.6)"
         required: false
@@ -59,7 +59,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.4' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache"
 
@@ -70,7 +70,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.4' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache,mode=max"
@@ -82,7 +82,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.4' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache,mode=max"
@@ -97,7 +97,7 @@ jobs:
         if: github.event_name != 'pull_request'
         env:
           TALOS_VERSION: ${{ inputs.talos_version || 'v1.12.6' }}
-          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.4' }}
+          PKGS_TAG: ${{ inputs.pkgs_tag || 'v1.12.6' }}
         run: |
           NVGPU_DIGEST=$(jq -r '."containerimage.digest"' _out/nvgpu.metadata.json)
           echo "nvgpu digest: ${NVGPU_DIGEST}"

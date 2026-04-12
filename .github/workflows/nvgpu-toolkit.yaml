@@ -22,7 +22,7 @@ concurrency:
       pkgs_tag:
         description: "PKGS tag to build against (nvidia-container-toolkit-tegra-pkg version)"
         required: false
-        default: "v1.12.4"
+        default: "v1.12.6"
 
 name: nvgpu-toolkit
 
@@ -56,7 +56,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.4' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache"
 
@@ -67,7 +67,7 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.4' }} \
+            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache \
