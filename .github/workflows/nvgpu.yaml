@@ -1,6 +1,7 @@
 ---
 # Custom CI for nvgpu extension — uses GitHub-hosted arm64 runners.
-# Pulls nvgpu-driver-pkg from ghcr.io/mmalyska (built by siderolabs-pkgs fork).
+# Pulls nvgpu-driver-pkg and nvmap-driver-pkg from ghcr.io/mmalyska (built by siderolabs-pkgs fork).
+# nvgpu-toolkit builds nvidia-container-toolkit from source directly (no pkgs dependency).
 concurrency:
   group: ${{ github.head_ref || github.run_id }}-nvgpu
   cancel-in-progress: true
@@ -19,7 +20,7 @@ concurrency:
   workflow_dispatch:
     inputs:
       pkgs_tag:
-        description: "PKGS tag to build against (e.g. v1.12.0-50-ga92bed5)"
+        description: "PKGS tag to build against for nvgpu kernel modules (e.g. v1.12.0-50-ga92bed5)"
         required: false
         default: "v1.12.6"
       talos_version:
@@ -55,13 +56,18 @@ jobs:
       - name: Build (PR — no push)
         if: github.event_name == 'pull_request'
         run: |
-          make nvgpu nvgpu-toolkit \
+          make nvgpu \
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
             PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
             PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu:buildcache"
+          make nvgpu-toolkit \
+            PLATFORM=linux/arm64 \
+            REGISTRY=ghcr.io \
+            USERNAME=${{ github.repository_owner }} \
+            CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache"
 
       - name: Build and push nvgpu
         if: github.event_name != 'pull_request'
@@ -82,8 +88,6 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
-            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache,mode=max"
 

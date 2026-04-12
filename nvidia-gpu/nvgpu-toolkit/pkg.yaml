@@ -1,21 +1,49 @@
 name: nvgpu-toolkit
 variant: scratch
 shell: /bin/bash
+install:
+  - build-base
+  - gcc-14
+  - bash
+  - go
 dependencies:
   - stage: base
-  # Built by mmalyska/siderolabs-pkgs feat/jetson-nvgpu branch
-  # Build with: make nvgpu-toolkit PKGS=<pkgs-tag> PKGS_PREFIX=ghcr.io/mmalyska
-  - image: "{{ .BUILD_ARG_PKGS_PREFIX }}/nvidia-container-toolkit-tegra-pkg:{{ .BUILD_ARG_PKGS }}"
+  - image: cgr.dev/chainguard/wolfi-base@{{ .WOLFI_BASE_REF }}
 steps:
-  - install:
+  - sources:
+      - url: https://github.com/NVIDIA/nvidia-container-toolkit/archive/refs/tags/{{ .CONTAINER_TOOLKIT_VERSION }}.tar.gz
+        destination: container-toolkit.tar.gz
+        sha256: {{ .CONTAINER_TOOLKIT_SHA256 }}
+        sha512: {{ .CONTAINER_TOOLKIT_SHA512 }}
+    env:
+      CC: gcc-14
+      CXX: g++-14
+      GIT_COMMIT: "{{ substr 0 7 .CONTAINER_TOOLKIT_REF }}"
+    prepare:
       - |
-        # Install toolkit binaries directly — no wrapper needed.
+        mkdir -p /container-toolkit
+        tar -xzf container-toolkit.tar.gz --strip-components=1 -C /container-toolkit
+    build:
+      - |
+        # CGO_ENABLED=0 produces fully static binaries — required because Talos's
+        # pod-containerd root has no glibc dynamic linker (/lib/ld-linux-aarch64.so.1).
+        # nvidia-cdi-hook is excluded: it transitively imports go-nvml/pkg/dl (CGO-only)
+        # which is not needed for Tegra CSV-based device discovery.
+        cd /container-toolkit
+        CGO_ENABLED=0 make \
+          cmd-nvidia-container-runtime \
+          cmd-nvidia-container-runtime-hook \
+          cmd-nvidia-container-runtime.cdi \
+          cmd-nvidia-container-runtime.legacy \
+          cmd-nvidia-ctk
+    install:
+      - |
+        # Install toolkit binaries directly.
         # NVIDIA_CTK_CONFIG_FILE_PATH is set via Talos machine.env so containerd and all
         # child processes (including nvidia-container-runtime) inherit the config path.
         mkdir -p /rootfs/usr/local/bin
-        for bin in /usr/local/bin/nvidia-container-* /usr/local/bin/nvidia-ctk; do
-          [ -f "${bin}" ] && cp "${bin}" "/rootfs/usr/local/bin/$(basename ${bin})"
-        done
+        cd /container-toolkit
+        find . -maxdepth 1 -type f -executable -exec cp {} /rootfs/usr/local/bin/ \;
       - |
         # Install nvidia-container-runtime config pointing to the /usr/local/etc/ CSV path
         mkdir -p /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d

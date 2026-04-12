@@ -1,7 +1,6 @@
 ---
 # Custom CI for nvgpu-toolkit extension — uses GitHub-hosted arm64 runners.
-# Pulls nvidia-container-toolkit-tegra-pkg from ghcr.io/mmalyska
-# (built by mmalyska/siderolabs-pkgs feat/jetson-nvgpu branch).
+# Builds nvidia-container-toolkit from source directly (CGO_ENABLED=0, static binaries).
 concurrency:
   group: ${{ github.head_ref || github.run_id }}-nvgpu-toolkit
   cancel-in-progress: true
@@ -18,11 +17,6 @@ concurrency:
       - main
       - feat/jetson-nvgpu
   workflow_dispatch:
-    inputs:
-      pkgs_tag:
-        description: "PKGS tag to build against (nvidia-container-toolkit-tegra-pkg version)"
-        required: false
-        default: "v1.12.6"
 
 name: nvgpu-toolkit
 
@@ -56,8 +50,6 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
-            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache"
 
       - name: Build and push
@@ -67,8 +59,6 @@ jobs:
             PLATFORM=linux/arm64 \
             REGISTRY=ghcr.io \
             USERNAME=${{ github.repository_owner }} \
-            PKGS=${{ inputs.pkgs_tag || 'v1.12.6' }} \
-            PKGS_PREFIX=ghcr.io/${{ github.repository_owner }} \
             PUSH=true \
             CI_ARGS="--cache-from type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache \
                      --cache-to type=registry,ref=ghcr.io/${{ github.repository_owner }}/nvgpu-toolkit:buildcache,mode=max"

@@ -1,4 +1,2 @@
-# Version tracks the PKGS tag this extension is built against (= the nvidia-container-toolkit-tegra-pkg version).
-# BUILD_ARG_PKGS is passed via: make nvgpu-toolkit PKGS=<tag> — e.g. v1.12.3
-VERSION: "{{ .BUILD_ARG_PKGS }}"
+VERSION: "{{ .CONTAINER_TOOLKIT_VERSION }}"
 TIER: "extra"
