@@ -1,6 +1,9 @@
 [nvidia-container-runtime]
   log-level = "info"
   mode = "csv"
+  # Tegra does not expose a host CUDA version via /proc/driver/nvidia/version.
+  # Requirement checks (cuda>=X.Y) are meaningless in CSV mode — skip them.
+  disable-require = true
 
 [nvidia-container-runtime.modes.csv]
   mount-spec-path = "/usr/local/etc/nvidia-container-runtime/host-files-for-container.d"
