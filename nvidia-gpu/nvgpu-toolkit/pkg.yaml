@@ -23,6 +23,7 @@ steps:
       - |
         mkdir -p /container-toolkit
         tar -xzf container-toolkit.tar.gz --strip-components=1 -C /container-toolkit
+        cp -r /pkg/files/wrapper /wrapper
     build:
       - |
         # CGO is required — go-nvml/pkg/dl and internal/cuda have CGO-only implementations
@@ -38,19 +39,28 @@ steps:
           cmd-nvidia-container-runtime.cdi \
           cmd-nvidia-container-runtime.legacy \
           cmd-nvidia-ctk
+      - |
+        # Build the config-path wrapper as a pure-Go static binary (no CGO).
+        # The wrapper sets NVIDIA_CTK_CONFIG_FILE_PATH before exec-ing the real binary,
+        # because containerd sanitizes the environment when forking OCI runtime subprocesses
+        # so machine.env values are not inherited. No shell needed — this is a compiled binary.
+        cd /wrapper
+        CGO_ENABLED=0 go build -ldflags="-s -w" -o /nvidia-container-runtime-wrapper .
     install:
       - |
-        # Install toolkit binaries directly.
-        # NVIDIA_CTK_CONFIG_FILE_PATH is set via Talos machine.env so containerd and all
-        # child processes (including nvidia-container-runtime) inherit the config path.
         mkdir -p /rootfs/usr/local/bin
         cd /container-toolkit
-        find . -maxdepth 1 -type f -executable -exec cp {} /rootfs/usr/local/bin/ \;
+        # Install all toolkit binaries except nvidia-container-runtime under their original names.
+        find . -maxdepth 1 -type f -executable ! -name nvidia-container-runtime \
+          -exec cp {} /rootfs/usr/local/bin/ \;
+        # Install the real nvidia-container-runtime with .real suffix (exec'd by the wrapper).
+        cp nvidia-container-runtime /rootfs/usr/local/bin/nvidia-container-runtime.real
+        # Install the wrapper as nvidia-container-runtime — containerd invokes this.
+        cp /nvidia-container-runtime-wrapper /rootfs/usr/local/bin/nvidia-container-runtime
       - |
-        # Install config at the NVIDIA_CTK_CONFIG_FILE_PATH location (/usr/local/etc/).
-        # The default path /etc/nvidia-container-runtime/config.toml is not writable by
-        # extensions (blocked by extensions-validator). That path is provisioned via
-        # Talos machine.files in talconfig.yaml instead.
+        # Install config at /usr/local/etc/ (the path the wrapper injects via env var).
+        # /etc/nvidia-container-runtime/ is blocked by extensions-validator; the wrapper
+        # ensures the runtime always finds this path regardless of inherited environment.
         mkdir -p /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d
         cp /pkg/files/l4t.csv /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d/l4t.csv
         cp /pkg/files/config.toml /rootfs/usr/local/etc/nvidia-container-runtime/config.toml
