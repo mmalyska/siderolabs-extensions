@@ -25,13 +25,14 @@ steps:
         tar -xzf container-toolkit.tar.gz --strip-components=1 -C /container-toolkit
     build:
       - |
-        # Build with CGO enabled — go-nvml/pkg/dl and internal/cuda both require CGO
-        # (they provide dlopen-based NVML loading and CUDA detection). The NVIDIA Makefile
-        # already uses -Wl,--unresolved-symbols=ignore-in-object-files so libnvidia-ml.so
-        # does not need to be present at build time. Wolfi (musl-based) produces a
-        # musl-linked binary that runs correctly in Talos's system containerd environment.
+        # CGO is required — go-nvml/pkg/dl and internal/cuda have CGO-only implementations
+        # (build constraints exclude all files when CGO_ENABLED=0).
+        # Override EXTLDFLAGS with -static so the Makefile produces fully static musl binaries.
+        # Talos has no dynamic linker in the extension overlay, so dynamic binaries won't run.
+        # musl's static libc includes dlopen, so the binary can still lazy-load libnvidia-ml.so
+        # at runtime if needed (not required for Tegra CSV-based device discovery).
         cd /container-toolkit
-        make \
+        make EXTLDFLAGS="-static" \
           cmd-nvidia-container-runtime \
           cmd-nvidia-container-runtime-hook \
           cmd-nvidia-container-runtime.cdi \
