@@ -25,12 +25,13 @@ steps:
         tar -xzf container-toolkit.tar.gz --strip-components=1 -C /container-toolkit
     build:
       - |
-        # CGO_ENABLED=0 produces fully static binaries — required because Talos's
-        # pod-containerd root has no glibc dynamic linker (/lib/ld-linux-aarch64.so.1).
-        # nvidia-cdi-hook is excluded: it transitively imports go-nvml/pkg/dl (CGO-only)
-        # which is not needed for Tegra CSV-based device discovery.
+        # Build with CGO enabled — go-nvml/pkg/dl and internal/cuda both require CGO
+        # (they provide dlopen-based NVML loading and CUDA detection). The NVIDIA Makefile
+        # already uses -Wl,--unresolved-symbols=ignore-in-object-files so libnvidia-ml.so
+        # does not need to be present at build time. Wolfi (musl-based) produces a
+        # musl-linked binary that runs correctly in Talos's system containerd environment.
         cd /container-toolkit
-        CGO_ENABLED=0 make \
+        make \
           cmd-nvidia-container-runtime \
           cmd-nvidia-container-runtime-hook \
           cmd-nvidia-container-runtime.cdi \
