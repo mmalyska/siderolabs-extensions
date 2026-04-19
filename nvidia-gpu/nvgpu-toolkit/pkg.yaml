@@ -47,15 +47,13 @@ steps:
         cd /container-toolkit
         find . -maxdepth 1 -type f -executable -exec cp {} /rootfs/usr/local/bin/ \;
       - |
-        # Install config at both the NVIDIA_CTK_CONFIG_FILE_PATH location and the default
-        # /etc/nvidia-container-runtime/config.toml. containerd sanitizes the environment
-        # when forking OCI runtime subprocesses, so NVIDIA_CTK_CONFIG_FILE_PATH may not be
-        # inherited — the runtime falls back to the default path.
+        # Install config at the NVIDIA_CTK_CONFIG_FILE_PATH location (/usr/local/etc/).
+        # The default path /etc/nvidia-container-runtime/config.toml is not writable by
+        # extensions (blocked by extensions-validator). That path is provisioned via
+        # Talos machine.files in talconfig.yaml instead.
         mkdir -p /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d
-        mkdir -p /rootfs/etc/nvidia-container-runtime
         cp /pkg/files/l4t.csv /rootfs/usr/local/etc/nvidia-container-runtime/host-files-for-container.d/l4t.csv
         cp /pkg/files/config.toml /rootfs/usr/local/etc/nvidia-container-runtime/config.toml
-        cp /pkg/files/config.toml /rootfs/etc/nvidia-container-runtime/config.toml
       - |
         # Install containerd runtime handler config for nvidia handler
         mkdir -p /rootfs/etc/cri/conf.d
