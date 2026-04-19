@@ -6,6 +6,7 @@ install:
   - gcc-14
   - bash
   - go
+  - python3
 dependencies:
   - stage: base
   - image: cgr.dev/chainguard/wolfi-base@{{ .WOLFI_BASE_REF }}
@@ -23,11 +24,15 @@ steps:
       - |
         mkdir -p /container-toolkit
         tar -xzf container-toolkit.tar.gz --strip-components=1 -C /container-toolkit
-        # Patch the default config root from /etc to /usr/local/etc.
-        # Talos extensions-validator blocks writing to /etc/ subdirectories, so all
-        # extension config lives under /usr/local/etc. env var overrides still take priority.
+        # Patch 1: default config root /etc → /usr/local/etc.
+        # Talos extensions-validator blocks /etc/ subdirectories; extension config
+        # lives under /usr/local/etc. env var overrides still take priority.
         sed -i 's|configRoot := "/etc"|configRoot := "/usr/local/etc"|g' \
           /container-toolkit/api/config/v1/config.go
+        # Patch 2: honour cfg.DisableRequire in CSV mode.
+        # image.HasDisableRequire() checks the container env var NVIDIA_DISABLE_REQUIRE,
+        # not the config file field. See files/patches/patch-csv.py for details.
+        python3 /pkg/files/patches/patch-csv.py
     build:
       - |
         # CGO is required — go-nvml/pkg/dl and internal/cuda have CGO-only implementations
